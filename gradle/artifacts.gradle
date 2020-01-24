@@ -1,0 +1,75 @@
+apply plugin: "java"
+apply plugin: "scala"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileScala {
+    scalaCompileOptions.with {
+        force = true
+    }
+    scalaCompileOptions.additionalParameters = ["-feature"]
+}
+
+configurations {
+    all*.exclude group: "org.jboss.netty", module: "netty"
+    compile.extendsFrom fat
+}
+
+startHadoopZips.dependsOn buildAzkabanFlows
+build.dependsOn buildHadoopZips
+
+task fatjar(type: Jar) {
+    classifier = "fatjar"
+
+    zip64 true
+    from {
+        (configurations.fat).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+
+    jar.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    with jar
+}
+
+task azkabanZips(dependsOn: 'build') {
+    doLast {
+        def ant = new groovy.util.AntBuilder()
+        ant.zip(destfile: "$buildDir/distributions/" + (project.name + "-" + version + "-flows.zip"), basedir: "$buildDir/azkaban/")
+    }
+}
+
+
+distributions {
+    main {
+        contents {
+            baseName = rootProject.name
+            from new File("$buildDir/../scripts/")
+            into( 'libs' ) {
+                from new File("$buildDir/libs/")
+            }
+        }
+    }
+
+    config {
+        contents {
+            baseName = rootProject.name
+            from new File("$buildDir/../config")
+            into '/'
+        }
+    }
+}
+
+distTar {
+    compression = Compression.GZIP
+    extension = "tar.gz"
+}
+
+configDistTar {
+    classifier = "config"
+    compression = Compression.GZIP
+    extension = "tar.gz"
+}
+
+distTar.dependsOn([fatjar, configDistTar])

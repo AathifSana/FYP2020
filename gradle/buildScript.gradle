@@ -1,0 +1,10 @@
+repositories {
+    mavenLocal()
+    maven { url "https://plugins.gradle.org/m2/" }
+}
+
+dependencies {
+    classpath("com.linkedin.hadoop-plugin:hadoop-plugin:0.9.1") {
+        exclude module: 'xercesImpl'
+    }
+}

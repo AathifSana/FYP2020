@@ -1,0 +1,53 @@
+buildscript { apply from: file("$rootDir/gradle/buildScript.gradle"), to: buildscript }
+
+apply plugin: "com.linkedin.gradle.hadoop.HadoopPlugin"
+apply plugin: 'distribution'
+apply from: "$rootDir/gradle/artifacts.gradle"
+apply from: "$rootDir/gradle/flows.gradle"
+
+apply from: "$rootDir/gradle/repositories.gradle"
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply plugin: "idea"
+apply plugin: 'java'
+apply plugin: 'scala'
+apply plugin: 'base'
+
+repositories {
+
+    maven { url repos.hortonworksPublic }
+    maven { url repos.hortonworksRelease }
+    maven { url repos.mvnGradle }
+    maven { url repos.mvn }
+}
+
+dependencies {
+
+    compile([
+            libs.sparkYarn,
+            libs.sparkMLLib,
+            libs.sparkSql,
+            libs.sparkHive,
+            libs.sparkBreeze
+    ])
+
+    fat([
+            libs.databricksCSV,
+            libs.databricksAvro,
+            libs.joda,
+            libs.clapper,
+            libs.args
+
+    ])
+
+    testCompile([
+            libs.scalaTest,
+            libs.jUnit,
+            libs.holdenkarau,
+            libs.guava
+    ])
+}
+
+
+group 'aathif_2015156'
+version '1.0'
+

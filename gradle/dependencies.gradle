@@ -1,0 +1,29 @@
+ext {
+    versions = [:]
+    libs = [:]
+}
+versions += [
+        scala: "2.11",
+        spark: "2.2.1"
+]
+
+libs += [
+        sparkCore: dependencies.create("org.apache.spark:spark-core_$versions.scala:$versions.spark"){ exclude group: "org.scalatest", module: "scalatest_$versions.scala" },
+        sparkYarn: "org.apache.spark:spark-yarn_$versions.scala:$versions.spark",
+        sparkMLLib: dependencies.create("org.apache.spark:spark-mllib_$versions.scala:$versions.spark"){ exclude group: "org.scalatest", module: "scalatest_$versions.scala" },
+        sparkSql: dependencies.create("org.apache.spark:spark-sql_$versions.scala:$versions.spark"){ exclude group: "org.scalatest", module: "scalatest_$versions.scala" },
+        sparkHive: dependencies.create("org.apache.spark:spark-hive_$versions.scala:$versions.spark"){ exclude group: "org.scalatest", module: "scalatest_$versions.scala" },
+        sparkBreeze: "org.scalanlp:breeze_$versions.scala:0.12",
+        databricksCSV: "com.databricks:spark-csv_$versions.scala:1.5.0",
+        databricksAvro: "com.databricks:spark-avro_$versions.scala:3.0.0",
+        joda: "org.joda:joda-convert:1.2",
+        clapper: "org.clapper:argot_$versions.scala:1.0.4",
+        args: "com.twitter:scalding-args_$versions.scala:0.16.0",
+        scalaLib: "org.scala-lang:scala-library:$versions.scala.0",
+        scalaTest: "org.scalatest:scalatest_$versions.scala:2.2.4",
+        jUnit: "junit:junit:4.10",
+        hadoopCommon: "org.apache.hadoop:hadoop-common:2.4.1" ,
+        gcsConnector: "com.google.cloud.bigdataoss:gcs-connector:1.6.4-hadoop2",
+        holdenkarau: "com.holdenkarau:spark-testing-base_2.11:2.1.1_0.9.0",
+        guava: "com.google.guava:guava:16.0"
+]

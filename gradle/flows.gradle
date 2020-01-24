@@ -1,0 +1,3 @@
+hadoop {
+    buildPath "$buildDir/azkaban/"
+}
