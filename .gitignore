@@ -1,0 +1,28 @@
+*.iml
+.idea/
+.gradle/
+build/
+bin/
+target/
+out/
+
+# Apache Spark executions local files
+######################################
+**/metastore_db/*
+metastore_db/*
+metastore_db/
+spark-warehouse/*
+spark-warehouse/
+derby.log
+**/derby.log
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
