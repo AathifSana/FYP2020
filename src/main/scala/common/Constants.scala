@@ -1,7 +1,12 @@
 package common
 
+import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.functions.udf
+
+
 object Constants {
 
+  //values and characters
   val BLANK = ""
   val SPACE = " "
   val COMMA = ","
@@ -14,6 +19,19 @@ object Constants {
   val STR_BOOL_TRUE = "true"
   val STR_BOOL_FALSE = "false"
 
+  //formats
   val PARQUET_FORMAT = "parquet"
   val CSV_FORMAT = "com.databricks.spark.csv"
+
+  //regex
+  val numberFilterRegex = "^[0-9]*$"
+
+  //udf functions
+  val validateIsNumbersfunc: (String => Boolean) = (arg: String) => {
+    arg != null && arg.nonEmpty && arg.matches(numberFilterRegex)
+  }
+
+  val atLeastOneNumberUDF = (code: String)=> {
+    code != null && code != StringUtils.EMPTY && code.exists(_.isDigit)
+  }
 }
