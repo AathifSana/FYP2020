@@ -1,8 +1,7 @@
 package common
 
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.functions.udf
-
+import org.apache.spark.sql.functions._
 
 object Constants {
 
@@ -27,11 +26,12 @@ object Constants {
   val numberFilterRegex = "^[0-9]*$"
 
   //udf functions
-  val validateIsNumbersfunc: (String => Boolean) = (arg: String) => {
+  val validateIsNumbersUDF = udf((arg: String) => {
     arg != null && arg.nonEmpty && arg.matches(numberFilterRegex)
-  }
+  })
 
-  val atLeastOneNumberUDF = (code: String)=> {
-    code != null && code != StringUtils.EMPTY && code.exists(_.isDigit)
-  }
+  val atLeastOneNumberUDF = udf((arg: String)=> {
+    arg != null && arg != StringUtils.EMPTY && arg.exists(_.isDigit)
+  })
+
 }
