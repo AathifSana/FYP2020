@@ -5,6 +5,7 @@ build/
 bin/
 target/
 out/
+src/main/resources/
 
 # Apache Spark executions local files
 ######################################
