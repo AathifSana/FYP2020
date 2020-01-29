@@ -2,14 +2,11 @@ package utils
 
 import com.twitter.scalding.Args
 import common.Environment
-import datasources.DataSource.sparkSession
 import common.Constants._
 import datasources.DataSource
-import org.apache.spark.sql.functions.{col, collect_set, concat, concat_ws}
+import org.apache.spark.sql.functions.{col}
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.SaveMode
 import org.apache.spark.sql.types.{FloatType, IntegerType}
-import org.apache.spark.sql.functions._
 
 object DataPreprocessingJob {
 
@@ -23,12 +20,7 @@ object DataPreprocessingJob {
     val inputPath = params.required("input")
     val writePath = params.required("output")
 
-    val transactions = sparkSession
-      .read
-      .format(CSV_FORMAT)
-      .option("delimiter", TAB)
-      .option("header", STR_BOOL_TRUE)
-      .load(inputPath)
+    val transactions = DataSource.getTSVDataFrame(inputPath, header = STR_BOOL_TRUE)
 
     val validTransactions = transactions
       .withColumn(QUANTITY, col(QUANTITY).cast(IntegerType))
@@ -38,8 +30,6 @@ object DataPreprocessingJob {
         col(DATE_TIME).isNotNull && col(DATE_TIME)=!= StringUtils.EMPTY &&
         col(CUSTOMER_ID).isNotNull && col(CUSTOMER_ID) =!= StringUtils.EMPTY
       )
-      .withColumn(TRANSACTION_ID, concat(col(DATE_TIME),col(CUSTOMER_ID)))
-
 
     val filteredTransactions = validTransactions
       .filter(
@@ -55,8 +45,6 @@ object DataPreprocessingJob {
     )
 
   }
-
-  val TRANSACTION_ID = "TRANS_ID"
 
   val INVOICE_NO = "InvoiceNo"
   val STOCK_CODE = "StockCode"
