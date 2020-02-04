@@ -20,22 +20,27 @@ object FrequentlyBoughtJob {
     val inputPathSeg = params.getOrElse("inputSeg" , "")
     val inputPath = params.required("input")
     val writePath = params.required("output")
-    val minSupport = params.getOrElse("support" , "0.2").toDouble
-    val minConfidence = params.getOrElse("confidence" , "0.1").toDouble
+    val minSupport = params.getOrElse("support" , "0.01").toDouble
+    val minConfidence = params.getOrElse("confidence" , "0.2").toDouble
 
-    val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
+//    val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
     val transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
 
     val itemsPerPerchases = transactions
       .groupBy(INVOICE_NO, DATE_TIME, CUSTOMER_ID, COUNTRY)
       .agg(collect_set(STOCK_CODE) as ITEMS)
 
+    transactions.show(5)
+    println(transactions.count())
+    itemsPerPerchases.show(5, false)
+    println(itemsPerPerchases.count())
 
     val fpgrowth = new FPGrowth().setItemsCol(ITEMS).setMinSupport(minSupport).setMinConfidence(minConfidence)
-    val model = fpgrowth.fit(transactions)
+    val model = fpgrowth.fit(itemsPerPerchases)
 
     model.freqItemsets.show()
     model.associationRules.show()
+    model.associationRules.agg(max("confidence"), min("confidence"), avg("confidence")).show()
 
   }
 
