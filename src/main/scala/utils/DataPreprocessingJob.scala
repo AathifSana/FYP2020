@@ -4,9 +4,11 @@ import com.twitter.scalding.Args
 import common.Environment
 import common.Constants._
 import datasources.DataSource
-import org.apache.spark.sql.functions.{col}
+import org.apache.spark.sql.functions.col
 import org.apache.commons.lang3.StringUtils
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{FloatType, IntegerType}
+import org.apache.spark.sql.functions._
 
 object DataPreprocessingJob {
 
@@ -39,8 +41,30 @@ object DataPreprocessingJob {
         && atLeastOneNumberUDF(col(STOCK_CODE))
       )
 
+    val mostFreqPName = udf { list: Seq[Row] =>
+      list.maxBy(_.getLong(1)).getString(0)
+    }
+
+    val productNames = filteredTransactions.groupBy(STOCK_CODE, PRODUCT_NAME).count()
+        .groupBy(STOCK_CODE).agg(mostFreqPName(collect_list(struct(PRODUCT_NAME, COUNT))) as PRODUCT_NAME)
+
+
+    val mostFreqPrice = udf { list: Seq[Row] =>
+      list.maxBy(_.getLong(1)).getFloat(0)
+    }
+
+    val productPrices = filteredTransactions.groupBy(STOCK_CODE, PRICE).count()
+        .groupBy(STOCK_CODE).agg(mostFreqPrice(collect_list(struct(PRICE, COUNT))) as PRICE)
+
+
+    val preProcessed = filteredTransactions.drop(PRODUCT_NAME, PRICE)
+        .join(productNames, STOCK_CODE)
+        .join(productPrices, STOCK_CODE)
+        .select(INVOICE_NO,STOCK_CODE,PRODUCT_NAME,QUANTITY,DATE_TIME,PRICE,CUSTOMER_ID,COUNTRY)
+
+
     DataSource.saveDataFrameAsTSV(
-      filteredTransactions.repartition(1),
+      preProcessed.repartition(1),
       writePath
     )
 
@@ -55,4 +79,5 @@ object DataPreprocessingJob {
   val CUSTOMER_ID = "CustomerID"
   val COUNTRY = "Country"
 
+  val COUNT = "count"
 }
