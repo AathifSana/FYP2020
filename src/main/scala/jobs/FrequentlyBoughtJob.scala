@@ -1,7 +1,7 @@
 package jobs
 
 import com.twitter.scalding.Args
-import common.Environment
+import common.{Environment, FPGrowthCalculations}
 import datasources.DataSource
 import common.Constants._
 import org.apache.spark.ml.fpm.FPGrowth
@@ -30,17 +30,29 @@ object FrequentlyBoughtJob {
       .groupBy(INVOICE_NO, DATE_TIME, CUSTOMER_ID, COUNTRY)
       .agg(collect_set(STOCK_CODE) as ITEMS)
 
-    transactions.show(5)
-    println(transactions.count())
-    itemsPerPerchases.show(5, false)
-    println(itemsPerPerchases.count())
 
-    val fpgrowth = new FPGrowth().setItemsCol(ITEMS).setMinSupport(minSupport).setMinConfidence(minConfidence)
+    val fpgrowth = new FPGrowth().setItemsCol(ITEMS)
+      .setMinSupport(minSupport)
+      .setMinConfidence(minConfidence)
+      .setPredictionCol(RECS)
+
     val model = fpgrowth.fit(itemsPerPerchases)
 
-    model.freqItemsets.show()
-    model.associationRules.show()
-    model.associationRules.agg(max("confidence"), min("confidence"), avg("confidence")).show()
+    val products = transactions.select(STOCK_CODE, PRODUCT_NAME, PRICE)
+      .withColumnRenamed(STOCK_CODE, ITEMS)
+      .distinct()
+      .withColumn(ITEMS, array(ITEMS))
+
+    val predictions = FPGrowthCalculations(products)
+        .transform(model)
+        .getPredictedDataset
+        .withColumnRenamed(ITEMS, STOCK_CODE)
+        .withColumn(STOCK_CODE, concat_ws("",col(STOCK_CODE)))
+
+
+
+    predictions.show()
+
 
   }
 
@@ -55,6 +67,7 @@ object FrequentlyBoughtJob {
   val ALL = "*"
   val SEGMENT = "segment"
   val ITEMS = "items"
+  val RECS = "recs"
 
   //Per Perchase-----------------------
   val PRICE_PER_PURCHASE = "pricePerPurchase"
