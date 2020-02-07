@@ -1,9 +1,10 @@
-package common
+package utils
 
 import org.apache.spark.ml.fpm.FPGrowthModel
-import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Row}
+
 import scala.language.existentials
 
 class FPGrowthCalculations(dataset: DataFrame){
