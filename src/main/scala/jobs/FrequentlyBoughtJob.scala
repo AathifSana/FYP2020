@@ -1,12 +1,13 @@
 package jobs
 
 import com.twitter.scalding.Args
-import common.{Environment, FPGrowthCalculations}
+import common.Environment
 import datasources.DataSource
 import common.Constants._
 import org.apache.spark.ml.fpm.FPGrowth
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import utils.FPGrowthCalculations
 
 object FrequentlyBoughtJob {
 
@@ -20,8 +21,8 @@ object FrequentlyBoughtJob {
     val inputPathSeg = params.getOrElse("inputSeg" , "")
     val inputPath = params.required("input")
     val writePath = params.required("output")
-    val minSupport = params.getOrElse("support" , "0.01").toDouble
-    val minConfidence = params.getOrElse("confidence" , "0.2").toDouble
+    val minSupport = params.getOrElse("support" , "0.008").toDouble
+    val minConfidence = params.getOrElse("confidence" , "0.15").toDouble
 
 //    val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
     val transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
@@ -46,13 +47,11 @@ object FrequentlyBoughtJob {
     val predictions = FPGrowthCalculations(products)
         .transform(model)
         .getPredictedDataset
-        .withColumnRenamed(ITEMS, STOCK_CODE)
-        .withColumn(STOCK_CODE, concat_ws("",col(STOCK_CODE)))
+        .withColumnRenamed(ITEMS, KEY)
+        .withColumn(KEY, concat_ws(BLANK,col(STOCK_CODE)))
+        .withColumn(RECS, concat_ws(COMMA, col(RECS)))
 
-
-
-    predictions.show()
-
+    DataSource.saveDataFrameAsTSV(predictions, writePath)
 
   }
 
@@ -68,6 +67,7 @@ object FrequentlyBoughtJob {
   val SEGMENT = "segment"
   val ITEMS = "items"
   val RECS = "recs"
+  val KEY = "key"
 
   //Per Perchase-----------------------
   val PRICE_PER_PURCHASE = "pricePerPurchase"
