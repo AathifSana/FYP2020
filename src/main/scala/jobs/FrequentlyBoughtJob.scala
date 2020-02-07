@@ -18,14 +18,24 @@ object FrequentlyBoughtJob {
     implicit val sc = Environment.sparkSession.sparkContext
     sc.setLogLevel("ERROR")
 
-    val inputPathSeg = params.getOrElse("inputSeg" , "")
+    val inputPathSeg = params.getOrElse("inputSeg" , BLANK)
+    val segment = params.getOrElse("segment","1")
     val inputPath = params.required("input")
     val writePath = params.required("output")
     val minSupport = params.getOrElse("support" , "0.008").toDouble
     val minConfidence = params.getOrElse("confidence" , "0.15").toDouble
 
-//    val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
-    val transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
+    var transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
+
+    if (inputPathSeg != BLANK){
+
+      val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
+
+      transactions = transactions.join(customerSegments, CUSTOMER_ID)
+          .drop(PURCHASES_PER_CUSTOMER, AVG_PRICE_PER_PURCHASE_PER_CUSTOMER, AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER)
+          .filter(col(SEGMENT) === segment)
+
+    }
 
     val itemsPerPerchases = transactions
       .groupBy(INVOICE_NO, DATE_TIME, CUSTOMER_ID, COUNTRY)
@@ -39,7 +49,7 @@ object FrequentlyBoughtJob {
 
     val model = fpgrowth.fit(itemsPerPerchases)
 
-    val products = transactions.select(STOCK_CODE, PRODUCT_NAME, PRICE)
+    val products = transactions.select(STOCK_CODE)
       .withColumnRenamed(STOCK_CODE, ITEMS)
       .distinct()
       .withColumn(ITEMS, array(ITEMS))
@@ -48,10 +58,11 @@ object FrequentlyBoughtJob {
         .transform(model)
         .getPredictedDataset
         .withColumnRenamed(ITEMS, KEY)
-        .withColumn(KEY, concat_ws(BLANK,col(STOCK_CODE)))
+        .withColumn(KEY, concat_ws(BLANK,col(KEY)))
         .withColumn(RECS, concat_ws(COMMA, col(RECS)))
 
-    DataSource.saveDataFrameAsTSV(predictions, writePath)
+
+        DataSource.saveDataFrameAsTSV(predictions, writePath)
 
   }
 
