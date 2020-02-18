@@ -18,8 +18,8 @@ object FrequentlyBoughtJob {
     implicit val sc = Environment.sparkSession.sparkContext
     sc.setLogLevel("ERROR")
 
-    val inputPathSeg = params.getOrElse("inputSeg" , BLANK)
-    val segment = params.getOrElse("segment","1")
+    val inputPathSeg = params.required("inputSeg")
+    val segment = params.getOrElse("segment",BLANK)
     val inputPath = params.required("input")
     val writePath = params.required("output")
     val minSupport = params.getOrElse("support" , "0.008").toDouble
@@ -27,7 +27,7 @@ object FrequentlyBoughtJob {
 
     var transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
 
-    if (inputPathSeg != BLANK){
+    if (segment != BLANK){
 
       val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
 
@@ -62,7 +62,7 @@ object FrequentlyBoughtJob {
         .withColumn(RECS, concat_ws(COMMA, col(RECS)))
 
 
-        DataSource.saveDataFrameAsTSV(predictions, writePath)
+        DataSource.saveDataFrameAsTSV(predictions.repartition(1), writePath)
 
   }
 
