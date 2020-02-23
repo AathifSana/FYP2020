@@ -24,6 +24,7 @@ object FrequentlyBoughtJob {
     val writePath = params.required("output")
     val minSupport = params.getOrElse("support" , "0.008").toDouble
     val minConfidence = params.getOrElse("confidence" , "0.15").toDouble
+    val recFillPath = params.getOrElse("recFill", BLANK)
 
     var transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
 
@@ -61,8 +62,36 @@ object FrequentlyBoughtJob {
         .withColumn(KEY, concat_ws(BLANK,col(KEY)))
         .withColumn(RECS, concat_ws(COMMA, col(RECS)))
 
+    if(recFillPath != BLANK) {
 
-        DataSource.saveDataFrameAsTSV(predictions.repartition(1), writePath)
+      val generalRecs = DataSource.getTSVDataFrameWithSchema(recFillPath,
+        StructType(Array(
+          StructField(KEY, StringType, true),
+          StructField(RECS2, StringType, true)
+        )
+        )
+      )
+      val mergeRecsUDF = udf((segmented: String, general: String)=>{
+        var segarr = segmented.split(COMMA)
+        var genarr = general.split(COMMA)
+
+        genarr.foreach{p => if(!segarr.contains(p)){
+          segarr = segarr :+ p
+        }}
+        segarr.mkString(COMMA)
+      })
+
+      val finalRecs = predictions.join(generalRecs, KEY).withColumn(RECS, mergeRecsUDF(col(RECS), col(RECS2)))
+        .drop(RECS2)
+
+      DataSource.saveDataFrameAsTSV(finalRecs.repartition(1), writePath)
+
+
+    }else{
+      DataSource.saveDataFrameAsTSV(predictions.repartition(1), writePath)
+
+    }
+
 
   }
 
@@ -78,6 +107,7 @@ object FrequentlyBoughtJob {
   val SEGMENT = "segment"
   val ITEMS = "items"
   val RECS = "recs"
+  val RECS2 = "recs2"
   val KEY = "key"
 
   //Per Perchase-----------------------
