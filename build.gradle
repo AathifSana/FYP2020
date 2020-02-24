@@ -4,7 +4,6 @@ apply plugin: "com.linkedin.gradle.hadoop.HadoopPlugin"
 apply plugin: 'distribution'
 apply from: "$rootDir/gradle/artifacts.gradle"
 apply from: "$rootDir/gradle/flows.gradle"
-
 apply from: "$rootDir/gradle/repositories.gradle"
 apply from: "$rootDir/gradle/dependencies.gradle"
 apply plugin: "idea"

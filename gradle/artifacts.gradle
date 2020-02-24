@@ -33,24 +33,23 @@ task fatjar(type: Jar) {
     with jar
 }
 
-task azkabanZips(dependsOn: 'build') {
+task azkabanZips {
     doLast {
         def ant = new groovy.util.AntBuilder()
         ant.zip(destfile: "$buildDir/distributions/" + (project.name + "-" + version + "-flows.zip"), basedir: "$buildDir/azkaban/")
     }
 }
 
-
 distributions {
-    main {
-        contents {
-            baseName = rootProject.name
-            from new File("$buildDir/../scripts/")
-            into( 'libs' ) {
-                from new File("$buildDir/libs/")
-            }
-        }
-    }
+//    main {
+//        contents {
+//            baseName = rootProject.name
+//            from new File("$buildDir/../scripts/")
+//            into( 'libs' ) {
+//                from new File("$buildDir/libs/")
+//            }
+//        }
+//    }
 
     config {
         contents {
@@ -61,10 +60,10 @@ distributions {
     }
 }
 
-distTar {
-    compression = Compression.GZIP
-    extension = "tar.gz"
-}
+//distTar {
+//    compression = Compression.GZIP
+//    extension = "tar.gz"
+//}
 
 configDistTar {
     classifier = "config"
@@ -72,4 +71,6 @@ configDistTar {
     extension = "tar.gz"
 }
 
-distTar.dependsOn([fatjar, configDistTar])
+build.dependsOn azkabanZips
+azkabanZips.dependsOn(fatjar,configDistTar,buildAzkabanFlows)
+//distTar.dependsOn([fatjar, configDistTar])

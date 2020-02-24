@@ -1,3 +1,5 @@
 hadoop {
     buildPath "$buildDir/azkaban/"
 }
+
+apply from: 'gradle/workflows/flow.gradle'
