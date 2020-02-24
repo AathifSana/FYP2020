@@ -1,0 +1,94 @@
+def commonProperties = ['retries': 3, 'retry.backoff': 1000]
+
+hadoop {
+    namespace('Spark') {
+
+        def preProcessedDir = "\${RESOURCES_LOCATION}preprocessed"
+        def segmentsDir = "\${RESOURCES_LOCATION}segments"
+        def recsDir = "\${RESOURCES_LOCATION}recs"
+
+        ext.sparkProperties = { driverCores, driverMemory, executorCores, executorMemory ->
+            "driverCores='$driverCores' " +
+                    "driverMemory='$driverMemory' " +
+                    "executorCores='$executorCores' " +
+                    "executorMemory='$executorMemory' "
+        }
+
+//spark-submit
+//--master local[3]
+//--driver-memory 1g
+//--driver-cores 1
+//--executor-memory 2g
+//--executor-cores 2
+//--class jobs.FrequentlyBoughtJob
+//        ./build/libs/FYP_AATHIF-1.0-fatjar.jar
+//--input /home/aathif/Documents/IIT/L6\ SE/FYP/Project/src/main/resources/preprocessed
+//--output /home/aathif/Documents/IIT/L6\ SE/FYP/Project/src/main/resources/recs/seg
+//--support 0.01
+//--confidence 0.2
+//--inputSeg /home/aathif/Documents/IIT/L6\ SE/FYP/Project/src/main/resources/segments/customer_segments
+//--segment 3
+//--recFill /home/aathif/Documents/IIT/L6\ SE/FYP/Project/src/main/resources/recs/gen
+
+        commandJob('PreProcessing') {
+            set properties: commonProperties
+            uses "spark-submit " +
+                    "--master local " +
+//                    "${sparkProperties(1,'1g',1,'1g')}" +
+                    "--class utils.DataPreprocessingJob " +
+                    "\${JAR_LOCATION} " +
+                    "--input \${RESOURCES_LOCATION}inital/Online_Retail.csv " +
+                    "--output $preProcessedDir"
+
+        }
+
+        commandJob('CustomerSegmentation') {
+            set properties: commonProperties
+            depends  'PreProcessing'
+            uses "spark-submit " +
+                    "--master local " +
+//                    "${sparkProperties(1,'1g',1,'1g')}" +
+                    "--class jobs.CustomerSegmentationJob " +
+                    "\${JAR_LOCATION} " +
+                    "--input $preProcessedDir " +
+                    "--output $segmentsDir"
+
+        }
+
+        commandJob('FrequentlyBoughtGeneral') {
+            set properties: commonProperties
+            depends  'CustomerSegmentation'
+            uses "spark-submit " +
+                    "--master local " +
+//                    "${sparkProperties(1,'1g',1,'1g')}" +
+                    "--class jobs.FrequentlyBoughtJob " +
+                    "\${JAR_LOCATION} " +
+                    "--input $preProcessedDir " +
+                    "--output $recsDir/gen " +
+                    "--support 0.01 " +
+                    "--confidence 0.2 " +
+                    "--inputSeg $segmentsDir/customer_segments"
+
+        }
+
+        commandJob('FrequentlyBoughtSegmented') {
+            set properties: commonProperties
+            depends  'FrequentlyBoughtGeneral'
+            uses "spark-submit " +
+                    "--master local " +
+//                    "${sparkProperties(1,'1g',1,'1g')}" +
+                    "--class jobs.FrequentlyBoughtJob " +
+                    "\${JAR_LOCATION} " +
+                    "--input $preProcessedDir " +
+                    "--output $recsDir/gen " +
+                    "--support 0.01 " +
+                    "--confidence 0.2 " +
+                    "--inputSeg $segmentsDir/customer_segments " +
+                    "--segment 3 " +
+                    "--recFill $recsDir/gen"
+
+        }
+
+        targets 'FrequentlyBoughtSegmented'
+    }
+}
