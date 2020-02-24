@@ -1,14 +1,13 @@
-package utils
+package jobs
 
 import com.twitter.scalding.Args
+import common.Constants.{STR_BOOL_TRUE, atLeastOneNumberUDF, validateIsNumbersUDF}
 import common.Environment
-import common.Constants._
 import datasources.DataSource
-import org.apache.spark.sql.functions.col
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Row
+import org.apache.spark.sql.functions.{col, collect_list, struct, udf}
 import org.apache.spark.sql.types.{FloatType, IntegerType}
-import org.apache.spark.sql.functions._
 
 object DataPreprocessingJob {
 
