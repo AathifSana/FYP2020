@@ -35,7 +35,7 @@ hadoop {
             uses "spark-submit " +
                     "--master local " +
 //                    "${sparkProperties(1,'1g',1,'1g')}" +
-                    "--class utils.DataPreprocessingJob " +
+                    "--class jobs.DataPreprocessingJob " +
                     "\${JAR_LOCATION} " +
                     "--input \${RESOURCES_LOCATION}inital/Online_Retail.csv " +
                     "--output $preProcessedDir"

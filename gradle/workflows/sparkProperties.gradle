@@ -1,6 +1,0 @@
-//ext.setSparkProperties = { driverCores, driverMemory, executorCores, executorMemory ->
-//    "driverCores='$driverCores' " +
-//            "driverMemory='$driverMemory' " +
-//            "executorCores='$executorCores' " +
-//            "executorMemory='$executorMemory' "
-//}
