@@ -7,9 +7,14 @@ import org.apache.spark.sql.types._
 import common.Common._
 import datasources.DataSource
 import org.apache.spark.sql.functions._
+import co.theasi.plotly._
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.feature.VectorAssembler
+
+import scala.collection.mutable.ArrayBuffer
 
 
-object CustomerSegmentationJob {
+object CustomerClusteringJob {
 
   def main(args: Array[String]): Unit = {
 
@@ -27,60 +32,63 @@ object CustomerSegmentationJob {
       .agg(sum(col(PRICE) * col(QUANTITY)) as PRICE_PER_PURCHASE,
         (countDistinct(STOCK_CODE) / sum(QUANTITY)) as PRODUCT_QUANTITY_RATIO_PER_PURCHASE)
 
-    val avgPerPerchase = perPerchase.agg(sum(PRICE_PER_PURCHASE) as TOTAL_REVENUE,
-      avg(PRICE_PER_PURCHASE) as AVG_PRICE_PER_PURCHASE,
-      count(PRICE_PER_PURCHASE) as TOTAL_PURCHASES,
-      avg(PRODUCT_QUANTITY_RATIO_PER_PURCHASE) as AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE)
 
     val perCustomer = perPerchase.groupBy(CUSTOMER_ID)
-        .agg(count(ALL) as PURCHASES_PER_CUSTOMER,
+      .agg(count(ALL) as PURCHASES_PER_CUSTOMER,
         avg(PRICE_PER_PURCHASE) as AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
         avg(PRODUCT_QUANTITY_RATIO_PER_PURCHASE) as AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER)
 
-    val avgPerCustomer = perCustomer.agg(avg(PURCHASES_PER_CUSTOMER) as AVG_PURCHASES_PER_CUSTOMER)
+
+    val minMaxPerCustomer = perCustomer.agg(
+      min(PURCHASES_PER_CUSTOMER) as MIN_PURCHASES_PER_CUSTOMER
+      , max(PURCHASES_PER_CUSTOMER) as MAX_PURCHASES_PER_CUSTOMER
+      , min(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER) as MIN_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER
+      , max(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER) as MAX_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER
+      , min(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER) as MIN_AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER
+      , max(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER) as MAX_AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER)
 
 
-    val avgPurchasesPerCustomer = avgPerCustomer.head().getDouble(0)
-    val avgPricePerPurchase = avgPerPerchase.head().getDouble(1)
-    val avgProductQuantityRatioPerPurchase = avgPerPerchase.head().getDouble(3)
+    val scaledPerCustomer = perCustomer.crossJoin(minMaxPerCustomer)
+      .withColumn(PURCHASES_PER_CUSTOMER, scaleUDF(col(PURCHASES_PER_CUSTOMER),
+        col(MIN_PURCHASES_PER_CUSTOMER), col(MAX_PURCHASES_PER_CUSTOMER), lit(1), lit(100)))
+      .withColumn(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER, scaleUDF(col(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER),
+        col(MIN_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), lit(1), lit(100)))
+      .withColumn(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER, scaleUDF(col(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER),
+        col(MIN_AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER), lit(1), lit(100)))
+
+    val assembler = new VectorAssembler()
+      .setInputCols(
+        Array(
+          PURCHASES_PER_CUSTOMER,
+          AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
+          AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER
+    )).setOutputCol(FEATURES)
+
+    val featureDf = assembler.transform(scaledPerCustomer).select(FEATURES)
+
+    var costArray = ArrayBuffer[Double]()
+    val clusters = (2 to 15)
+
+    clusters.foreach{c =>
+      val kmeans = new KMeans().setK(c).setFeaturesCol(FEATURES).setPredictionCol(SEGMENT)
+      val model = kmeans.fit(featureDf)
+      costArray += model.computeCost(featureDf)
+    }
 
 
-    val segmentDf = perCustomer.withColumn(SEGMENT, {
+    //------------------------------------------------------------------------
 
-      val segUDF = udf(getSegmentFunc)
-
-      segUDF(col(PURCHASES_PER_CUSTOMER),
-      col(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER),
-      col(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER),
-      lit(avgPurchasesPerCustomer), lit(avgPricePerPurchase), lit(avgProductQuantityRatioPerPurchase))
-
-    })
+    import co.theasi.plotly
+    import util.Random
 
 
-    val segmentStats = segmentDf.groupBy(SEGMENT)
-      .agg(count(ALL).as(NO_OF_CUSTOMERS),
-      max(PURCHASES_PER_CUSTOMER),
-      min(PURCHASES_PER_CUSTOMER),
-      avg(PURCHASES_PER_CUSTOMER),
-      max(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER),
-      min(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER),
-      avg(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER),
-      max(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER),
-      min(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER),
-      avg(AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER))
+    val p = Plot().withScatter(clusters, costArray.toSeq)
+
+    draw(p, "K means Elbow", writer.FileOptions(overwrite=true))
+
+    // returns  PlotFile(pbugnion:173,basic-scatter)
 
 
-    DataSource.saveDataFrameAsTSV(
-      segmentDf.repartition(1),
-      writePath+"/customer_segments",
-      header = STR_BOOL_TRUE
-    )
-
-    DataSource.saveDataFrameAsTSV(
-      segmentStats.repartition(1),
-      writePath+"/segment_statistics",
-      header = STR_BOOL_TRUE
-    )
 
   }
 
@@ -105,12 +113,21 @@ object CustomerSegmentationJob {
   val AVG_PRICE_PER_PURCHASE_PER_CUSTOMER = "avgPricePerPurchasePerCustomer"
   val AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER = "avgProductQuantityRatioPerPurchasePerCustomer"
 
+  val MAX_PURCHASES_PER_CUSTOMER = "max_purchasesPerCustomer"
+  val MIN_PURCHASES_PER_CUSTOMER = "min_purchasesPerCustomer"
+
+  val MAX_AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER = "max_avgProductQuantityRatioPerPurchasePerCustomer"
+  val MIN_AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER = "min_avgProductQuantityRatioPerPurchasePerCustomer"
+
+  val MAX_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER = "max_avgPricePerPurchasePerCustomer"
+  val MIN_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER = "min_avgPricePerPurchasePerCustomer"
 
   //Avg -------------------------------
   val AVG_PURCHASES_PER_CUSTOMER = "avgPurchasesPerCustomer"
   val AVG_PRICE_PER_PURCHASE = "avgPricePerPurchase"
   val AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE = "avgProductQuantityRatioPerPurchase"
 
+  val FEATURES = "features"
 
   val TOTAL_REVENUE = "totalRevenue"
   val TOTAL_PURCHASES = "totalPurchases"

@@ -3,7 +3,7 @@ package common
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.functions._
 
-object Constants {
+object Common {
 
   //values and characters
   val BLANK = ""
@@ -33,5 +33,18 @@ object Constants {
   val atLeastOneNumberUDF = udf((arg: String)=> {
     arg != null && arg != StringUtils.EMPTY && arg.exists(_.isDigit)
   })
+
+  val scaleFunc = (input: Double, min: Double, max: Double, rangeMin: Double, rangeMax: Double) => {
+    ((input - min) / (max - min) * (rangeMax - rangeMin)) + rangeMin
+  }
+  val scaleUDF = udf(scaleFunc)
+
+
+  val euclideanDistanceFunc = (xs: Seq[Double], ys: Seq[Double]) => {
+    math.sqrt((xs zip ys).map { case (x,y) => math.pow(y - x, 2) }.sum)
+  }
+
+  val euclideanDistanceUDF = udf(euclideanDistanceFunc)
+
 
 }

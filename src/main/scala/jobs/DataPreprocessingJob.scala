@@ -1,7 +1,7 @@
 package jobs
 
 import com.twitter.scalding.Args
-import common.Constants.{STR_BOOL_TRUE, atLeastOneNumberUDF, validateIsNumbersUDF}
+import common.Common.{STR_BOOL_TRUE, atLeastOneNumberUDF, validateIsNumbersUDF}
 import common.Environment
 import datasources.DataSource
 import org.apache.commons.lang3.StringUtils

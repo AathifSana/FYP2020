@@ -34,7 +34,8 @@ dependencies {
             libs.databricksAvro,
             libs.joda,
             libs.clapper,
-            libs.args
+            libs.args,
+            libs.plotly
 
     ])
 

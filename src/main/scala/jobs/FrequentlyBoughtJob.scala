@@ -3,7 +3,7 @@ package jobs
 import com.twitter.scalding.Args
 import common.Environment
 import datasources.DataSource
-import common.Constants._
+import common.Common._
 import org.apache.spark.ml.fpm.FPGrowth
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -33,7 +33,7 @@ object FrequentlyBoughtJob {
       val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
 
       transactions = transactions.join(customerSegments, CUSTOMER_ID)
-          .drop(PURCHASES_PER_CUSTOMER, AVG_PRICE_PER_PURCHASE_PER_CUSTOMER, AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER)
+          .select(INVOICE_NO, STOCK_CODE, PRODUCT_NAME, QUANTITY, PRICE, CUSTOMER_ID, DATE_TIME, COUNTRY, SEGMENT)
           .filter(col(SEGMENT) === segment)
 
     }

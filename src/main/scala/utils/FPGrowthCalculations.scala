@@ -9,23 +9,13 @@ import scala.language.existentials
 
 class FPGrowthCalculations(dataset: DataFrame){
 
-  /**
-    * Removes rows which has no predictions
-    * @param model : FPGrowthModel
-    * @return : dataset where empty predictions are dropped
-    */
+
   private def dropEmptyRecommendations(model: FPGrowthModel) = {
     val filteredDataset = dataset.filter(_.getAs[Seq[Any]](model.getPredictionCol).nonEmpty)
     FPGrowthCalculations(filteredDataset)
   }
 
-  /**
-    * Sorts the predictions according to the confidence and extracts only the predicted value
-    * Predicted Results would be in Seq[String]
-    * cast it back if required
-    * @param model : FPGrowthModel
-    * @return : dataset where the predictions are being sorted
-    */
+
   private def getSortedRecs(model: FPGrowthModel)= {
     val previousDatatype = dataset.schema(model.getItemsCol).dataType
 
@@ -39,13 +29,6 @@ class FPGrowthCalculations(dataset: DataFrame){
     FPGrowthCalculations(sortedPredictions)
   }
 
-  /**
-    * Predicts for the given item list
-    * Prediction logic is the same as the library's
-    * Predicts the item with the confidence As Tuples
-    * @param model FPGrowthModel
-    * @return predictions together with confidence as tuples
-    */
   private def predictWithConfidence(model : FPGrowthModel) = {
     model.transformSchema(dataset.schema)
 
@@ -83,9 +66,7 @@ class FPGrowthCalculations(dataset: DataFrame){
     FPGrowthCalculations(predictions)
   }
 
-  /**
-    * Above 3 methods are called together
-    */
+
   def transform(model: FPGrowthModel)= {
     predictWithConfidence(model)
       .getSortedRecs(model)
