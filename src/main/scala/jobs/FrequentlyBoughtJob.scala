@@ -85,7 +85,8 @@ object FrequentlyBoughtJob {
         segarr.mkString(COMMA)
       })
 
-      val finalRecs = predictions.join(generalRecs, Seq(KEY), "right").withColumn(RECS, mergeRecsUDF(col(RECS), col(RECS2)))
+      val finalRecs = predictions.join(generalRecs, Seq(KEY), "right")
+        .withColumn(RECS, mergeRecsUDF(col(RECS), col(RECS2)))
         .drop(RECS2)
 
       DataSource.saveDataFrameAsTSV(finalRecs.repartition(1), writePath)

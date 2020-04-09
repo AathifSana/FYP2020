@@ -2,6 +2,7 @@ package common
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.functions._
+import org.apache.spark.ml.linalg.Vectors
 
 object Common {
 
@@ -46,5 +47,28 @@ object Common {
 
   val euclideanDistanceUDF = udf(euclideanDistanceFunc)
 
+
+  val meanSquaredDifferenceFunc = (xs: Seq[Double], ys: Seq[Double]) => {
+    ((xs zip ys).map { case (x,y) => math.pow(y - x, 2) }.sum) / xs.length
+  }
+
+  val meanSquaredSimilarityFunc = (xs: Seq[Double], ys: Seq[Double]) => {
+    1 / (meanSquaredDifferenceFunc(xs,ys) + 1)
+  }
+
+  val meanSquaredDifferenceUDF = udf(meanSquaredDifferenceFunc)
+  val meanSquaredSimilarityUDF = udf(meanSquaredSimilarityFunc)
+
+  val jaccardSimilarityFunc = (seq1: Seq[String], seq2: Seq[String]) => {
+
+    val set1 = seq1.toSet
+    val set2 = seq2.toSet
+
+    if (set1.isEmpty || set2.isEmpty){
+      0.0
+    }else{
+      set1.intersect(set2).size/set1.union(set2).size.toDouble
+    }
+  }
 
 }
