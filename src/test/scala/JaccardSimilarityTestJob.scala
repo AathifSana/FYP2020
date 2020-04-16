@@ -39,6 +39,11 @@ object JaccardSimilarityTestJob {
     DataSource.saveDataFrameAsTSV(outDf,outputPath)
   }
 
+    val KEY = "KEY"
+    val VAL1 = "VAL1"
+    val VAL2 = "VAL2"
+    val JACCARD_SIM = "jaccard_similarity"
+    val JACCARD_DIS = "jaccard_distance"
 
   val schema1 = StructType(Array(
     StructField(KEY, StringType, true),
@@ -50,9 +55,5 @@ object JaccardSimilarityTestJob {
     StructField(VAL2, StringType, true)
   ))
 
-  val KEY = "KEY"
-  val VAL1 = "VAL1"
-  val VAL2 = "VAL2"
-  val JACCARD_SIM = "jaccard_similarity"
-  val JACCARD_DIS = "jaccard_distance"
+
 }

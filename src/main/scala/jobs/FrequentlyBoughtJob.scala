@@ -87,13 +87,18 @@ object FrequentlyBoughtJob {
 
       val finalRecs = predictions.join(generalRecs, Seq(KEY), "right")
         .withColumn(RECS, mergeRecsUDF(col(RECS), col(RECS2)))
-        .drop(RECS2)
+        .drop(RECS2).withColumnRenamed(KEY, STOCK_CODE)
 
       DataSource.saveDataFrameAsTSV(finalRecs.repartition(1), writePath)
 
+      DataSource.saveDataFrameToDatabase(finalRecs, "recommendations_seg"+segment)
 
     }else{
-      DataSource.saveDataFrameAsTSV(predictions.repartition(1), writePath)
+      DataSource.saveDataFrameAsTSV(predictions.withColumnRenamed(KEY, STOCK_CODE)
+        .repartition(1), writePath)
+
+      DataSource.saveDataFrameToDatabase(
+        predictions.withColumnRenamed(KEY, STOCK_CODE),"recommendations_gen")
 
     }
 

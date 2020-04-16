@@ -26,6 +26,8 @@ libs += [
         gcsConnector: "com.google.cloud.bigdataoss:gcs-connector:1.6.4-hadoop2",
         holdenkarau: "com.holdenkarau:spark-testing-base_2.11:2.1.1_0.9.0",
         guava: "com.google.guava:guava:16.0",
-        plotly: "co.theasi:plotly_2.11:0.2.0"
+        plotly: "co.theasi:plotly_2.11:0.2.0",
+        mysqli: "mysql:mysql-connector-java:5.1.13"
+
 
 ]

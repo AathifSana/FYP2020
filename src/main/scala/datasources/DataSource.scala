@@ -39,4 +39,18 @@ object DataSource {
       .option("header", header)
       .save(path)
   }
+
+  def saveDataFrameToDatabase(df: DataFrame, table: String): Unit ={
+    val prop = new java.util.Properties
+    prop.setProperty("driver", "com.mysql.jdbc.Driver")
+    prop.setProperty("user", "root")
+    prop.setProperty("password", "")
+
+    //jdbc mysql url - destination database is named "data"
+    val url = "jdbc:mysql://localhost/FYP"
+
+
+    //write data from spark dataframe to database
+    df.write.mode("overwrite").jdbc(url, table, prop)
+  }
 }
