@@ -12,8 +12,8 @@ hadoop {
 
         workflow('Segmented Recommendation Workflow'){
 
-            def projectDir = "/home/aathif/Documents/IIT/L6\\ SE/FYP/Project"
-            def resourcesDir = "/home/aathif/Documents/IIT/L6\\ SE/FYP/Project/src/main/resources"
+            def projectDir = "/home/aathif/Documents/IIT/L6_SE/FYP/Project"
+            def resourcesDir = "/home/aathif/Documents/IIT/L6_SE/FYP/Project/src/main/resources"
 
             commandJob('PreProcessing') {
                 set properties: commonProperties

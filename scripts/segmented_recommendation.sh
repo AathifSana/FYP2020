@@ -6,8 +6,6 @@ for item in $@; do
     esac
 done
 
- --segment 1 --recFill /home/aathif/Documents/IIT/L6\ SE/FYP/Project/src/main/resources/recs/gen
-
 echo "spark-submit --master local[3] \
 --driver-memory "$driverMemory" \
 --driver-cores "$driverCores" \
