@@ -19,6 +19,8 @@ object CustomerSegmentationJob4 {
 
     val inputPath = params.required("input")
     val writePath = params.required("output")
+    val customersPath = params.required("customers")
+    val customersWritePath = params.required("customersWrite")
 
     val maxR = 1000.0
 
@@ -141,6 +143,32 @@ object CustomerSegmentationJob4 {
       AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER, AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER, SIMILARITY, SEGMENT)
 
 
+
+
+
+    val customers = DataSource.getTSVDataFrameWithSchema(customersPath,
+      StructType(Array(
+        StructField(CUSTOMER_ID, StringType, true),
+        StructField(SEGMENT_OLD, StringType, true)
+      )))
+
+
+    val updateSegmentUDF = udf((old_seg: String, new_seg: String)=>{
+
+      var seg = new_seg match {
+        case null => old_seg
+        case _ => new_seg
+      }
+      seg
+    })
+
+    val updatedCustomers = customers
+      .join(segments.select(CUSTOMER_ID, SEGMENT), Seq(CUSTOMER_ID), "left")
+      .withColumn(SEGMENT, updateSegmentUDF(col(SEGMENT_OLD), col(SEGMENT)))
+      .drop(SEGMENT_OLD).distinct()
+
+
+
     val segmentStats = segments.groupBy(SEGMENT)
       .agg(count(ALL).as(NO_OF_CUSTOMERS),
         min(PURCHASES_PER_CUSTOMER),
@@ -172,6 +200,13 @@ object CustomerSegmentationJob4 {
       header = STR_BOOL_TRUE
     )
 
+    DataSource.saveDataFrameAsTSV(
+      updatedCustomers.repartition(1),
+      customersWritePath
+    )
+
+    DataSource.saveDataFrameToDatabase(updatedCustomers, "customers")
+
   }
 
   val INVOICE_NO = "InvoiceNo"
@@ -184,6 +219,8 @@ object CustomerSegmentationJob4 {
   val COUNTRY = "Country"
   val ALL = "*"
   val SEGMENT = "segment"
+  val SEGMENT_OLD = "segment_old"
+
 
   //Per Perchase-----------------------
   val PRICE_PER_PURCHASE = "pricePerPurchase"

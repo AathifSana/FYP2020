@@ -10,71 +10,119 @@ ext.sparkProperties = { driverCores, driverMemory, executorCores, executorMemory
 hadoop {
     namespace('Spark') {
 
-        workflow('FrequentlyBought'){
-            def preProcessedDir = "\${RESOURCES_LOCATION}preprocessed"
-            def segmentsDir = "\${RESOURCES_LOCATION}segments"
-            def recsDir = "\${RESOURCES_LOCATION}recs"
+        workflow('Segmented Recommendation Workflow'){
+
+            def projectDir = "/home/aathif/Documents/IIT/L6\\ SE/FYP/Project"
+            def resourcesDir = "/home/aathif/Documents/IIT/L6\\ SE/FYP/Project/src/main/resources"
 
             commandJob('PreProcessing') {
                 set properties: commonProperties
-                uses "spark-submit " +
-                        "--master local " +
-                        "${sparkProperties(1,'1g',1,'1g')}" +
-                        "--class jobs.DataPreprocessingJob " +
-                        "\${JAR_LOCATION} " +
-                        "--input \${RESOURCES_LOCATION}inital/Online_Retail.csv " +
-                        "--output $preProcessedDir"
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/inital/Online_Retail.csv' " +
+                        "output='$resourcesDir/preprocessed' "
 
             }
 
             commandJob('CustomerSegmentation') {
                 set properties: commonProperties
                 depends  'PreProcessing'
-                uses "spark-submit " +
-                        "--master local " +
-                        "${sparkProperties(1,'1g',1,'1g')}" +
-                        "--class jobs.CustomerSegmentationJob " +
-                        "\${JAR_LOCATION} " +
-                        "--input $preProcessedDir " +
-                        "--output $segmentsDir"
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/segments4' " +
+                        "customers='$resourcesDir/customers' " +
+                        "customersWrite='$resourcesDir/customersNew' "
 
             }
 
-            commandJob('FrequentlyBoughtGeneral') {
+            commandJob('GeneralRecommendation') {
                 set properties: commonProperties
                 depends  'CustomerSegmentation'
-                uses "spark-submit " +
-                        "--master local " +
-                        "${sparkProperties(1,'1g',1,'1g')}" +
-                        "--class jobs.FrequentlyBoughtJob " +
-                        "\${JAR_LOCATION} " +
-                        "--input $preProcessedDir " +
-                        "--output $recsDir/gen " +
-                        "--support 0.01 " +
-                        "--confidence 0.2 " +
-                        "--inputSeg $segmentsDir/customer_segments"
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/recs/gen' " +
+                        "support='0.01' " +
+                        "confidence='0.2' " +
+                        "inputSeg='$resourcesDir/segments4/customer_segments4' "
 
             }
 
-            commandJob('FrequentlyBoughtSegmented') {
+            commandJob('SegmentedRecommendation_for_segment1') {
                 set properties: commonProperties
-                depends  'FrequentlyBoughtGeneral'
-                uses "spark-submit " +
-                        "--master local " +
-                        "${sparkProperties(1,'1g',1,'1g')}" +
-                        "--class jobs.FrequentlyBoughtJob " +
-                        "\${JAR_LOCATION} " +
-                        "--input $preProcessedDir " +
-                        "--output $recsDir/gen " +
-                        "--support 0.01 " +
-                        "--confidence 0.2 " +
-                        "--inputSeg $segmentsDir/customer_segments " +
-                        "--segment 3 " +
-                        "--recFill $recsDir/gen"
+                depends  'GeneralRecommendation'
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/recs/seg1' " +
+                        "support='0.01' " +
+                        "confidence='0.2' " +
+                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
+                        "segment='1' " +
+                        "recFill='$resourcesDir/recs/gen' "
 
             }
 
-            targets 'FrequentlyBoughtSegmented'
+            commandJob('SegmentedRecommendation_for_segment2') {
+                set properties: commonProperties
+                depends  'SegmentedRecommendation_for_segment1'
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/recs/seg2' " +
+                        "support='0.01' " +
+                        "confidence='0.2' " +
+                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
+                        "segment='2' " +
+                        "recFill='$resourcesDir/recs/gen' "
+            }
+
+            commandJob('SegmentedRecommendation_for_segment3') {
+                set properties: commonProperties
+                depends  'SegmentedRecommendation_for_segment2'
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/recs/seg3' " +
+                        "support='0.01' " +
+                        "confidence='0.2' " +
+                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
+                        "segment='3' " +
+                        "recFill='$resourcesDir/recs/gen' "
+
+            }
+
+            commandJob('SegmentedRecommendation_for_segment4') {
+                set properties: commonProperties
+                depends  'SegmentedRecommendation_for_segment3'
+                uses "$projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1,'1g',2,'2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/recs/seg4' " +
+                        "support='0.01' " +
+                        "confidence='0.2' " +
+                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
+                        "segment='4' " +
+                        "recFill='$resourcesDir/recs/gen' "
+
+            }
+
+            targets 'SegmentedRecommendation_for_segment4'
         }
 
     }
