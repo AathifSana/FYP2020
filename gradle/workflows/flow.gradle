@@ -107,7 +107,7 @@ hadoop {
 
             commandJob('Jaccard_Similarity_for_seg2') {
                 set properties: commonProperties
-                depends 'Jaccard_Similarity_Testing1'
+                depends 'Jaccard_Similarity_for_seg1'
                 uses "bash $projectDir/scripts/test/jaccard_similarity_job.sh " +
                         "${sparkProperties(1, '1g', 2, '2g')}" +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
@@ -117,10 +117,10 @@ hadoop {
 
             }
 
-            targets 'Jaccard_Similarity_Testing2'
+            targets 'Jaccard_Similarity_for_seg2'
         }
 
-        workflow('Initial_Loader') {
+        workflow('Initial_Loader_Workflow') {
 
             commandJob('Initial_Loader') {
                 set properties: commonProperties
