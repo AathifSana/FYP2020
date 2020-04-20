@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#!/usr/bin/env bash
+
 for item in $@; do
     case $item in
         (*=*) eval $item;
@@ -11,10 +13,10 @@ echo "spark-submit --master local[3] \
 --driver-cores "$driverCores" \
 --executor-memory "$executorMemory" \
 --executor-cores "$executorCores" \
---class jobs.JaccardSimilarityTestJob \
+--jars "$additionalJars" \
+--class jobs.initial.InitialLoaderJob \
 "$artifactLocation" \
---input1 "$input1" \
---input2 "$input2" \
+--input "$input" \
 --output "$output
 
 /opt/spark/bin/spark-submit --master local[3] \
@@ -22,8 +24,10 @@ echo "spark-submit --master local[3] \
 --driver-cores $driverCores \
 --executor-memory $executorMemory \
 --executor-cores $executorCores \
---class jobs.JaccardSimilarityTestJob \
+--jars $additionalJars \
+--class jobs.initial.InitialLoaderJob \
 $artifactLocation \
---input1 $input1 \
---input2 $input2 \
+--input $input \
 --output $output
+
+

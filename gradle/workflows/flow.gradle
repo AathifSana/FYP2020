@@ -92,9 +92,9 @@ hadoop {
             targets 'SegmentedRecommendation_for_segment2'
         }
 
-        workflow('Jaccard_Similarity') {
+        workflow('Jaccard_Similarity_Testing') {
 
-            commandJob('Jaccard_Similarity_Testing1') {
+            commandJob('Jaccard_Similarity_for_seg1') {
                 set properties: commonProperties
                 uses "bash $projectDir/scripts/test/jaccard_similarity_job.sh " +
                         "${sparkProperties(1, '1g', 2, '2g')}" +
@@ -105,7 +105,7 @@ hadoop {
 
             }
 
-            commandJob('Jaccard_Similarity_Testing2') {
+            commandJob('Jaccard_Similarity_for_seg2') {
                 set properties: commonProperties
                 depends 'Jaccard_Similarity_Testing1'
                 uses "bash $projectDir/scripts/test/jaccard_similarity_job.sh " +
@@ -118,6 +118,22 @@ hadoop {
             }
 
             targets 'Jaccard_Similarity_Testing2'
+        }
+
+        workflow('Initial_Loader') {
+
+            commandJob('Initial_Loader') {
+                set properties: commonProperties
+                uses "bash $projectDir/scripts/initial/initial_loader.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/intial/Online_Retail.csv' " +
+                        "output='$resourcesDir' "
+
+            }
+
+            targets 'Initial_Loader'
         }
     }
 }

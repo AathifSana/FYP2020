@@ -1,4 +1,4 @@
-package datasources
+package jobs.initial
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
@@ -6,17 +6,14 @@ import java.text.SimpleDateFormat
 import com.twitter.scalding.Args
 import common.Common.STR_BOOL_TRUE
 import common.Environment
+import datasources.DataSource
 import jobs.DataPreprocessingJob._
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{FloatType, IntegerType}
 
-
-//This is the initial job ran in order to load all the product and customer details to the database
-// Not part of the workflow
-
-object ProdNCus {
+object InitialLoaderJob {
 
   def main(args: Array[String]): Unit = {
 
