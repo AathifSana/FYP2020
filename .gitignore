@@ -6,9 +6,7 @@ bin/
 target/
 out/
 src/main/resources/
-
-# Apache Spark executions local files
-######################################
+mysql-connector-java-5.1.48-bin.jar
 **/metastore_db/*
 metastore_db/*
 metastore_db/
@@ -16,9 +14,6 @@ spark-warehouse/*
 spark-warehouse/
 derby.log
 **/derby.log
-
-# OS generated files #
-######################
 .DS_Store
 .DS_Store?
 ._*
