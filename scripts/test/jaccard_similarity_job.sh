@@ -11,7 +11,7 @@ echo "spark-submit --master local[3] \
 --driver-cores "$driverCores" \
 --executor-memory "$executorMemory" \
 --executor-cores "$executorCores" \
---class jobs.JaccardSimilarityTestJob \
+--class jobs.test.JaccardSimilarityTestJob \
 "$artifactLocation" \
 --input1 "$input1" \
 --input2 "$input2" \
@@ -22,7 +22,7 @@ echo "spark-submit --master local[3] \
 --driver-cores $driverCores \
 --executor-memory $executorMemory \
 --executor-cores $executorCores \
---class jobs.JaccardSimilarityTestJob \
+--class jobs.test.JaccardSimilarityTestJob \
 $artifactLocation \
 --input1 $input1 \
 --input2 $input2 \
