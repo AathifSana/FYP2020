@@ -2,6 +2,7 @@ package common
 
 import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.functions._
+import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.linalg.Vectors
 
 object Common {
@@ -47,6 +48,9 @@ object Common {
 
   val euclideanDistanceUDF = udf(euclideanDistanceFunc)
 
+  val euclideanDistance = udf { (v1: Vector, v2: Vector) =>
+    math.sqrt(Vectors.sqdist(v1, v2))
+  }
 
   val meanSquaredDifferenceFunc = (xs: Seq[Double], ys: Seq[Double]) => {
     ((xs zip ys).map { case (x,y) => math.pow(y - x, 2) }.sum) / xs.length

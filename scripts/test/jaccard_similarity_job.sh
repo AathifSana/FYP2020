@@ -11,16 +11,12 @@ echo "spark-submit --master local[3] \
 --driver-cores "$driverCores" \
 --executor-memory "$executorMemory" \
 --executor-cores "$executorCores" \
---jars "$additionalJars" \
---class jobs.FrequentlyBoughtJob \
+--class jobs.CustomerSegmentationJob \
 "$artifactLocation" \
 --input "$input" \
 --output "$output" \
---support "$support" \
---confidence "$confidence" \
---inputSeg "$inputSeg" \
---segment "$segment" \
---recFill "$recFill
+--customers "$customers" \
+--customersWrite "$customersWrite
 
 /opt/spark/bin/spark-submit --master local[3] \
 --driver-memory $driverMemory \
@@ -28,12 +24,9 @@ echo "spark-submit --master local[3] \
 --executor-memory $executorMemory \
 --executor-cores $executorCores \
 --jars $additionalJars \
---class jobs.FrequentlyBoughtJob \
+--class jobs.CustomerSegmentationJob \
 $artifactLocation \
 --input $input \
 --output $output \
---support $support \
---confidence $confidence \
---inputSeg $inputSeg \
---segment $segment \
---recFill $recFill
+--customers $customers \
+--customersWrite $customersWrite

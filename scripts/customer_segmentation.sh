@@ -12,20 +12,20 @@ echo "spark-submit --master local[3] \
 --executor-memory "$executorMemory" \
 --executor-cores "$executorCores" \
 --jars "$additionalJars" \
---class jobs.CustomerSegmentationJob4 \
+--class jobs.CustomerSegmentationJob \
 "$artifactLocation" \
 --input "$input" \
 --output "$output" \
 --customers "$customers" \
 --customersWrite "$customersWrite
 
-spark-submit --master local[3] \
+/opt/spark/bin/spark-submit --master local[3] \
 --driver-memory $driverMemory \
 --driver-cores $driverCores \
 --executor-memory $executorMemory \
 --executor-cores $executorCores \
 --jars $additionalJars \
---class jobs.CustomerSegmentationJob4 \
+--class jobs.CustomerSegmentationJob \
 $artifactLocation \
 --input $input \
 --output $output \

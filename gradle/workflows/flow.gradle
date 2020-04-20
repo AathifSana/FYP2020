@@ -10,31 +10,32 @@ ext.sparkProperties = { driverCores, driverMemory, executorCores, executorMemory
 hadoop {
     namespace('Spark') {
 
-        workflow('Segmented Recommendation Workflow'){
 
-            def projectDir = "/home/aathif/Documents/IIT/L6_SE/FYP/Project"
-            def resourcesDir = "/home/aathif/Documents/IIT/L6_SE/FYP/Project/src/main/resources"
+        def projectDir = "/home/aathif/Documents/IIT/L6_SE/FYP/Project"
+        def resourcesDir = "/home/aathif/Documents/IIT/L6_SE/FYP/Project/src/main/resources"
+
+        workflow('Segmented_Recommendation_Workflow') {
 
             commandJob('PreProcessing') {
                 set properties: commonProperties
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
+                uses "bash $projectDir/scripts/data_preprocessing.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
                         "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
-                        "input='$resourcesDir/inital/Online_Retail.csv' " +
+                        "input='$resourcesDir/intial/Online_Retail.csv' " +
                         "output='$resourcesDir/preprocessed' "
 
             }
 
             commandJob('CustomerSegmentation') {
                 set properties: commonProperties
-                depends  'PreProcessing'
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
+                depends 'PreProcessing'
+                uses "bash $projectDir/scripts/customer_segmentation.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
                         "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input='$resourcesDir/preprocessed' " +
-                        "output='$resourcesDir/segments4' " +
+                        "output='$resourcesDir/segments' " +
                         "customers='$resourcesDir/customers' " +
                         "customersWrite='$resourcesDir/customersNew' "
 
@@ -42,31 +43,31 @@ hadoop {
 
             commandJob('GeneralRecommendation') {
                 set properties: commonProperties
-                depends  'CustomerSegmentation'
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
+                depends 'CustomerSegmentation'
+                uses "bash $projectDir/scripts/general_recommendation.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
                         "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input='$resourcesDir/preprocessed' " +
                         "output='$resourcesDir/recs/gen' " +
                         "support='0.01' " +
                         "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments4/customer_segments4' "
+                        "inputSeg='$resourcesDir/segments/customer_segments' "
 
             }
 
             commandJob('SegmentedRecommendation_for_segment1') {
                 set properties: commonProperties
-                depends  'GeneralRecommendation'
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
+                depends 'GeneralRecommendation'
+                uses "bash $projectDir/scripts/segmented_recommendation.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
                         "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input='$resourcesDir/preprocessed' " +
                         "output='$resourcesDir/recs/seg1' " +
                         "support='0.01' " +
                         "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
+                        "inputSeg='$resourcesDir/segments/customer_segments' " +
                         "segment='1' " +
                         "recFill='$resourcesDir/recs/gen' "
 
@@ -74,56 +75,40 @@ hadoop {
 
             commandJob('SegmentedRecommendation_for_segment2') {
                 set properties: commonProperties
-                depends  'SegmentedRecommendation_for_segment1'
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
+                depends 'SegmentedRecommendation_for_segment1'
+                uses "bash $projectDir/scripts/segmented_recommendation.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
                         "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input='$resourcesDir/preprocessed' " +
                         "output='$resourcesDir/recs/seg2' " +
                         "support='0.01' " +
                         "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
+                        "inputSeg='$resourcesDir/segments/customer_segments' " +
                         "segment='2' " +
                         "recFill='$resourcesDir/recs/gen' "
             }
 
-            commandJob('SegmentedRecommendation_for_segment3') {
-                set properties: commonProperties
-                depends  'SegmentedRecommendation_for_segment2'
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
-                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
-                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
-                        "input='$resourcesDir/preprocessed' " +
-                        "output='$resourcesDir/recs/seg3' " +
-                        "support='0.01' " +
-                        "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
-                        "segment='3' " +
-                        "recFill='$resourcesDir/recs/gen' "
-
-            }
-
-            commandJob('SegmentedRecommendation_for_segment4') {
-                set properties: commonProperties
-                depends  'SegmentedRecommendation_for_segment3'
-                uses "$projectDir/scripts/data_preprocessing.sh " +
-                        "${sparkProperties(1,'1g',2,'2g')}" +
-                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
-                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
-                        "input='$resourcesDir/preprocessed' " +
-                        "output='$resourcesDir/recs/seg4' " +
-                        "support='0.01' " +
-                        "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments4/customer_segments4' " +
-                        "segment='4' " +
-                        "recFill='$resourcesDir/recs/gen' "
-
-            }
-
-            targets 'SegmentedRecommendation_for_segment4'
+            targets 'SegmentedRecommendation_for_segment2'
         }
 
+        workflow('Jaccard_Similarity') {
+
+            commandJob('Jaccard_Similarity_Testing') {
+                set properties: commonProperties
+                uses "bash $projectDir/scripts/segmented_recommendation.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
+                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input='$resourcesDir/preprocessed' " +
+                        "output='$resourcesDir/recs/seg2' " +
+                        "support='0.01' " +
+                        "confidence='0.2' " +
+                        "inputSeg='$resourcesDir/segments/customer_segments' " +
+                        "segment='2' " +
+                        "recFill='$resourcesDir/recs/gen' "
+            }
+            targets 'Jaccard_Similarity_Testing'
+        }
     }
 }

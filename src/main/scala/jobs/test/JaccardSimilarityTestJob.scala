@@ -1,10 +1,15 @@
+package jobs.test
+
 import com.twitter.scalding.Args
-import common.Common._
+import common.Common.{COMMA, jaccardSimilarityFunc}
 import common.Environment
 import datasources.DataSource
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{col, lit, split, udf}
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
+/**
+  * Calculates the Jaccard similarity of the recommendations
+  */
 object JaccardSimilarityTestJob {
 
   def main(args: Array[String]): Unit = {

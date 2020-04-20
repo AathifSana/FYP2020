@@ -20,7 +20,7 @@ echo "spark-submit --master local[3] \
 --confidence "$confidence" \
 --inputSeg "$inputSeg
 
-spark-submit --master local[3] \
+/opt/spark/bin/spark-submit --master local[3] \
 --driver-memory $driverMemory \
 --driver-cores $driverCores \
 --executor-memory $executorMemory \

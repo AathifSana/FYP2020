@@ -17,7 +17,7 @@ echo "spark-submit --master local[3] \
 --input "$input" \
 --output "$output
 
-spark-submit --master local[3] \
+/opt/spark/bin/spark-submit --master local[3] \
 --driver-memory $driverMemory \
 --driver-cores $driverCores \
 --executor-memory $executorMemory \

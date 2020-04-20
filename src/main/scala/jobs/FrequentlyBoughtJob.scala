@@ -9,6 +9,11 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import utils.FPGrowthCalculations
 
+/**
+  * Data are being filtered according to the customer segment. (In segmented jobs)
+  * Runs fp growth algorithm on the datasets.
+  * Appends the general recommendations at the end. (if needed.)
+  */
 object FrequentlyBoughtJob {
 
   def main(args: Array[String]): Unit = {
@@ -22,8 +27,8 @@ object FrequentlyBoughtJob {
     val segment = params.getOrElse("segment",BLANK)
     val inputPath = params.required("input")
     val writePath = params.required("output")
-    val minSupport = params.getOrElse("support" , "0.008").toDouble
-    val minConfidence = params.getOrElse("confidence" , "0.15").toDouble
+    val minSupport = params.getOrElse("support" , "0.01").toDouble
+    val minConfidence = params.getOrElse("confidence" , "0.2").toDouble
     val recFillPath = params.getOrElse("recFill", BLANK)
 
     var transactions = DataSource.getTSVDataFrameWithSchema(inputPath, schema)
@@ -35,7 +40,6 @@ object FrequentlyBoughtJob {
       transactions = transactions.join(customerSegments, CUSTOMER_ID)
           .select(INVOICE_NO, STOCK_CODE, PRODUCT_NAME, QUANTITY, PRICE, CUSTOMER_ID, DATE_TIME, COUNTRY, SEGMENT)
           .filter(col(SEGMENT) === segment)
-
     }
 
     val itemsPerPerchases = transactions
@@ -67,25 +71,35 @@ object FrequentlyBoughtJob {
       val generalRecs = DataSource.getTSVDataFrameWithSchema(recFillPath,
         StructType(Array(
           StructField(KEY, StringType, true),
-          StructField(RECS2, StringType, true)
-        )
+          StructField(RECS2, StringType, true))
         )
       )
+
       val mergeRecsUDF = udf((segmented: String, general: String)=>{
 
-        var segarr = segmented match {
-          case null => Array.empty[String]
-          case _ => segmented.split(COMMA)
-        }
-        var genarr = general.split(COMMA)
+        val recarr = (segmented, general) match {
 
-        genarr.foreach{p => if(!segarr.contains(p)){
-          segarr = segarr :+ p
-        }}
-        segarr.mkString(COMMA)
+          case (null, _) => {
+            general
+          }
+          case (_, null) => {
+            segmented
+          }
+          case (_,_) => {
+            var segarr = segmented.split(COMMA)
+            var genarr = general.split(COMMA)
+
+            genarr.foreach{p => if(!segarr.contains(p)){
+              segarr = segarr :+ p
+            }}
+
+            segarr.mkString(COMMA)
+          }
+        }
+        recarr
       })
 
-      val finalRecs = predictions.join(generalRecs, Seq(KEY), "right")
+      val finalRecs = predictions.join(generalRecs, Seq(KEY), "full_outer")
         .withColumn(RECS, mergeRecsUDF(col(RECS), col(RECS2)))
         .drop(RECS2).withColumnRenamed(KEY, STOCK_CODE)
 

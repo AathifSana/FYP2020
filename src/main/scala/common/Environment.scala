@@ -5,14 +5,12 @@ import org.apache.spark.sql.SparkSession
 
 object Environment {
 
-  lazy val conf = new SparkConf().setAppName(APP_NM)
+  lazy val conf = new SparkConf().setAppName("SparkJob")
 
   lazy val sparkSession = SparkSession.builder()
       .config(conf)
-      .appName(APP_NM)
+      .appName("SparkJob")
       .enableHiveSupport()
       .getOrCreate()
 
-  var APP_NM = "SparkJob"
-  val LOCAL = "local"
 }

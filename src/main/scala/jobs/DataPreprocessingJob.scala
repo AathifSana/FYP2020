@@ -5,10 +5,12 @@ import common.Common.{STR_BOOL_TRUE, atLeastOneNumberUDF, validateIsNumbersUDF}
 import common.Environment
 import datasources.DataSource
 import org.apache.commons.lang3.StringUtils
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.functions.{col, collect_list, struct, udf}
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{FloatType, IntegerType}
 
+/*
+  Filters out the invalid data.
+ */
 object DataPreprocessingJob {
 
   def main(args: Array[String]): Unit = {

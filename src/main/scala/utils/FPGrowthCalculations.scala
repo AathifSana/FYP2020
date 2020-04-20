@@ -7,6 +7,12 @@ import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.language.existentials
 
+/*Since the FP Growth of the Spark ml library does not sort the predictions according to its confidence,
+  This class intends to fullfil that.
+  predictWithConfidence method follows the same steps as the library, but confidence is also included
+  getSortedRecs method sorts accoording to the confidence and displays only the consequents
+  dropEmptyRecommendations drops the records with empty predictions
+*/
 class FPGrowthCalculations(dataset: DataFrame){
 
 
