@@ -39,7 +39,6 @@ object JaccardSimilarityTestJob {
     val jDistance = jSimilar.withColumn(JACCARD_DIS, lit(1.0) - col(JACCARD_SIM))
 
     val outDf = jDistance.select(KEY,JACCARD_SIM,JACCARD_DIS)
-    outDf.show(false)
 
     DataSource.saveDataFrameAsTSV(outDf,outputPath)
   }
