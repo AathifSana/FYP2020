@@ -233,17 +233,4 @@ object CustomerSegmentationJob {
     StructField(COUNTRY, StringType, true)
   ))
 
-
-//  val getSegmentFunc = (value : Double) => {
-//    if(value <= 2500){
-//      "1"
-//    }else if(value <= 5000){
-//      "2"
-//    }else if(value <= 7500){
-//      "3"
-//    }else{
-//      "4"
-//    }
-//  }
-
 }

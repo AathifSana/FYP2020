@@ -11,22 +11,19 @@ echo "spark-submit --master local[3] \
 --driver-cores "$driverCores" \
 --executor-memory "$executorMemory" \
 --executor-cores "$executorCores" \
---class jobs.CustomerSegmentationJob \
+--class jobs.JaccardSimilarityTestJob \
 "$artifactLocation" \
---input "$input" \
---output "$output" \
---customers "$customers" \
---customersWrite "$customersWrite
+--input1 "$input1" \
+--input2 "$input2" \
+--output "$output"
 
 /opt/spark/bin/spark-submit --master local[3] \
 --driver-memory $driverMemory \
 --driver-cores $driverCores \
 --executor-memory $executorMemory \
 --executor-cores $executorCores \
---jars $additionalJars \
---class jobs.CustomerSegmentationJob \
+--class jobs.JaccardSimilarityTestJob \
 $artifactLocation \
---input $input \
---output $output \
---customers $customers \
---customersWrite $customersWrite
+--input1 $input1 \
+--input2 $input2 \
+--output $output

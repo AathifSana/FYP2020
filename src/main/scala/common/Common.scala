@@ -7,7 +7,6 @@ import org.apache.spark.ml.linalg.Vectors
 
 object Common {
 
-  //values and characters
   val BLANK = ""
   val SPACE = " "
   val COMMA = ","
@@ -20,14 +19,10 @@ object Common {
   val STR_BOOL_TRUE = "true"
   val STR_BOOL_FALSE = "false"
 
-  //formats
-  val PARQUET_FORMAT = "parquet"
   val CSV_FORMAT = "com.databricks.spark.csv"
 
-  //regex
   val numberFilterRegex = "^[0-9]*$"
 
-  //udf functions
   val validateIsNumbersUDF = udf((arg: String) => {
     arg != null && arg.nonEmpty && arg.matches(numberFilterRegex)
   })

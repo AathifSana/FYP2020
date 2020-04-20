@@ -94,21 +94,29 @@ hadoop {
 
         workflow('Jaccard_Similarity') {
 
-            commandJob('Jaccard_Similarity_Testing') {
+            commandJob('Jaccard_Similarity_Testing1') {
                 set properties: commonProperties
                 uses "bash $projectDir/scripts/segmented_recommendation.sh " +
                         "${sparkProperties(1, '1g', 2, '2g')}" +
-                        "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
-                        "input='$resourcesDir/preprocessed' " +
-                        "output='$resourcesDir/recs/seg2' " +
-                        "support='0.01' " +
-                        "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments/customer_segments' " +
-                        "segment='2' " +
-                        "recFill='$resourcesDir/recs/gen' "
+                        "input1='$resourcesDir/recs/gen' " +
+                        "input2='$resourcesDir/recs/seg1' " +
+                        "output='$resourcesDir/jSimlarity/seg1' "
+
             }
-            targets 'Jaccard_Similarity_Testing'
+
+            commandJob('Jaccard_Similarity_Testing2') {
+                set properties: commonProperties
+                uses "bash $projectDir/scripts/segmented_recommendation.sh " +
+                        "${sparkProperties(1, '1g', 2, '2g')}" +
+                        "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
+                        "input1='$resourcesDir/recs/gen' " +
+                        "input2='$resourcesDir/recs/seg2' " +
+                        "output='$resourcesDir/jSimlarity/seg2' "
+
+            }
+
+            targets 'Jaccard_Similarity_Testing2'
         }
     }
 }
