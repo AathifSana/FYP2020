@@ -96,7 +96,7 @@ hadoop {
 
             commandJob('Jaccard_Similarity_Testing1') {
                 set properties: commonProperties
-                uses "bash $projectDir/scripts/segmented_recommendation.sh " +
+                uses "bash $projectDir/scripts/test/jaccard_similarity_job.sh " +
                         "${sparkProperties(1, '1g', 2, '2g')}" +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input1='$resourcesDir/recs/gen' " +
@@ -107,7 +107,8 @@ hadoop {
 
             commandJob('Jaccard_Similarity_Testing2') {
                 set properties: commonProperties
-                uses "bash $projectDir/scripts/segmented_recommendation.sh " +
+                depends 'Jaccard_Similarity_Testing1'
+                uses "bash $projectDir/scripts/test/jaccard_similarity_job.sh " +
                         "${sparkProperties(1, '1g', 2, '2g')}" +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input1='$resourcesDir/recs/gen' " +

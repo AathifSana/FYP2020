@@ -13,8 +13,6 @@ apply plugin: 'base'
 
 repositories {
 
-    maven { url repos.hortonworksPublic }
-    maven { url repos.hortonworksRelease }
     maven { url repos.mvnGradle }
     maven { url repos.mvn }
 }
@@ -22,28 +20,19 @@ repositories {
 dependencies {
 
     compile([
-            libs.sparkYarn,
             libs.sparkMLLib,
             libs.sparkSql,
-            libs.sparkHive,
-            libs.sparkBreeze
     ])
 
     fat([
             libs.databricksCSV,
-            libs.databricksAvro,
-            libs.joda,
-            libs.clapper,
             libs.args,
             libs.plotly
-
     ])
 
     testCompile([
             libs.scalaTest,
-            libs.jUnit,
-            libs.holdenkarau,
-            libs.guava
+            libs.jUnit
     ])
 }
 

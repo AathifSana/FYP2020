@@ -3,8 +3,6 @@ ext {
 }
 
 repos += [
-        hortonworksPublic: "http://repo.hortonworks.com/content/groups/public/",
-        hortonworksRelease: "http://repo.hortonworks.com/content/repositories/releases/",
         mvnGradle: "https://plugins.gradle.org/m2/",
         mvn: "http://repo.maven.apache.org/maven2"
 ]

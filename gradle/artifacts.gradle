@@ -16,8 +16,6 @@ configurations {
     compile.extendsFrom fat
 }
 
-startHadoopZips.dependsOn buildAzkabanFlows
-build.dependsOn buildHadoopZips
 
 task fatjar(type: Jar) {
     classifier = "fatjar"
@@ -40,37 +38,5 @@ task azkabanZips {
     }
 }
 
-distributions {
-//    main {
-//        contents {
-//            baseName = rootProject.name
-//            from new File("$buildDir/../scripts/")
-//            into( 'libs' ) {
-//                from new File("$buildDir/libs/")
-//            }
-//        }
-//    }
-
-    config {
-        contents {
-            baseName = rootProject.name
-            from new File("$buildDir/../config")
-            into '/'
-        }
-    }
-}
-
-//distTar {
-//    compression = Compression.GZIP
-//    extension = "tar.gz"
-//}
-
-configDistTar {
-    classifier = "config"
-    compression = Compression.GZIP
-    extension = "tar.gz"
-}
-
 build.dependsOn azkabanZips
-azkabanZips.dependsOn(fatjar,configDistTar,buildAzkabanFlows)
-//distTar.dependsOn([fatjar, configDistTar])
+azkabanZips.dependsOn(fatjar,buildAzkabanFlows)
