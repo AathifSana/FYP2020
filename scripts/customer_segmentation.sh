@@ -16,8 +16,7 @@ echo "spark-submit --master local[3] \
 "$artifactLocation" \
 --input "$input" \
 --output "$output" \
---customers "$customers" \
---customersWrite "$customersWrite
+--customers "$customers
 
 /opt/spark/bin/spark-submit --master local[3] \
 --driver-memory $driverMemory \
@@ -29,10 +28,12 @@ echo "spark-submit --master local[3] \
 $artifactLocation \
 --input $input \
 --output $output \
---customers $customers \
---customersWrite $customersWrite
+--customers $customers
 
+echo "rm -r "$customers
 rm -r $customers
+
+echo "mv "$output" "$customers
 mv $output $customers
 
 

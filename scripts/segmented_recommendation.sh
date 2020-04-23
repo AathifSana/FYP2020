@@ -18,7 +18,7 @@ echo "spark-submit --master local[3] \
 --output "$output" \
 --support "$support" \
 --confidence "$confidence" \
---inputSeg "$inputSeg" \
+--customers "$customers" \
 --segment "$segment" \
 --recFill "$recFill
 
@@ -34,6 +34,6 @@ $artifactLocation \
 --output $output \
 --support $support \
 --confidence $confidence \
---inputSeg $inputSeg \
+--customers $customers \
 --segment $segment \
 --recFill $recFill
