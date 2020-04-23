@@ -33,7 +33,7 @@ $artifactLocation \
 --customersWrite $customersWrite
 
 rm -r $customers
-mv $customersWrite $customers
+mv $output $customers
 
 
 

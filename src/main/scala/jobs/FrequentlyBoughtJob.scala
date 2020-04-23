@@ -23,7 +23,7 @@ object FrequentlyBoughtJob {
     implicit val sc = Environment.sparkSession.sparkContext
     sc.setLogLevel("ERROR")
 
-    val inputPathSeg = params.required("inputSeg")
+    val customersPath = params.required("customers")
     val segment = params.getOrElse("segment",BLANK)
     val inputPath = params.required("input")
     val writePath = params.required("output")
@@ -35,17 +35,20 @@ object FrequentlyBoughtJob {
 
     if (segment != BLANK){
 
-      val customerSegments = DataSource.getTSVDataFrame(inputPathSeg, header = STR_BOOL_TRUE)
+      val customerSegments = DataSource.getTSVDataFrameWithSchema(customersPath,
+        StructType(Array(
+          StructField(CUSTOMER_ID, StringType, true),
+          StructField(SEGMENT, StringType, true)
+        )))
 
       transactions = transactions.join(customerSegments, CUSTOMER_ID)
           .select(INVOICE_NO, STOCK_CODE, PRODUCT_NAME, QUANTITY, PRICE, CUSTOMER_ID, DATE_TIME, COUNTRY, SEGMENT)
-          .filter(col(SEGMENT) === segment)
+          .filter(col(SEGMENT) === segment).distinct()
     }
 
     val itemsPerPerchases = transactions
       .groupBy(INVOICE_NO, DATE_TIME, CUSTOMER_ID, COUNTRY)
       .agg(collect_set(STOCK_CODE) as ITEMS)
-
 
     val fpgrowth = new FPGrowth().setItemsCol(ITEMS)
       .setMinSupport(minSupport)
@@ -115,7 +118,6 @@ object FrequentlyBoughtJob {
         predictions.withColumnRenamed(KEY, STOCK_CODE),"recommendations_gen")
 
     }
-
 
   }
 

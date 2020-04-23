@@ -35,9 +35,8 @@ hadoop {
                         "additionalJars='$projectDir/mysql-connector-java-5.1.48-bin.jar' " +
                         "artifactLocation='$projectDir/build/libs/FYP_AATHIF-1.0-fatjar.jar' " +
                         "input='$resourcesDir/preprocessed' " +
-                        "output='$resourcesDir/segments' " +
-                        "customers='$resourcesDir/customers' " +
-                        "customersWrite='$resourcesDir/customersNew' "
+                        "output='$resourcesDir/new_customers' " +
+                        "customers='$resourcesDir/customers' "
 
             }
 
@@ -52,7 +51,7 @@ hadoop {
                         "output='$resourcesDir/recs/gen' " +
                         "support='0.01' " +
                         "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments/customer_segments' "
+                        "customers='$resourcesDir/customers' "
 
             }
 
@@ -67,7 +66,7 @@ hadoop {
                         "output='$resourcesDir/recs/seg1' " +
                         "support='0.01' " +
                         "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments/customer_segments' " +
+                        "customers='$resourcesDir/customers' " +
                         "segment='1' " +
                         "recFill='$resourcesDir/recs/gen' "
 
@@ -84,7 +83,7 @@ hadoop {
                         "output='$resourcesDir/recs/seg2' " +
                         "support='0.01' " +
                         "confidence='0.2' " +
-                        "inputSeg='$resourcesDir/segments/customer_segments' " +
+                        "customers='$resourcesDir/customers' " +
                         "segment='2' " +
                         "recFill='$resourcesDir/recs/gen' "
             }

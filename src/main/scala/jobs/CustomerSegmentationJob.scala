@@ -23,7 +23,6 @@ object CustomerSegmentationJob {
     val inputPath = params.required("input")
     val writePath = params.required("output")
     val customersPath = params.required("customers")
-    val customersWritePath = params.required("customersWrite")
 
     val maxR = 100.0
     val minR = 1.0
@@ -58,13 +57,30 @@ object CustomerSegmentationJob {
 
     val perCustomerScaled = perCustomer.crossJoin(minMaxPerCustomer)
       .withColumn(SCALED_PURCHASES_PER_CUSTOMER,
-        scaleUDF(col(PURCHASES_PER_CUSTOMER), col(MIN_PURCHASES_PER_CUSTOMER), col(MAX_PURCHASES_PER_CUSTOMER), lit(minR), lit(maxR)))
+        scaleUDF(col(PURCHASES_PER_CUSTOMER), col(MIN_PURCHASES_PER_CUSTOMER), col(MAX_PURCHASES_PER_CUSTOMER),
+          lit(minR), lit(maxR)))
       .withColumn(SCALED_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
-        scaleUDF(col(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), col(MIN_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), lit(minR), lit(maxR)))
+        scaleUDF(col(AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), col(MIN_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER),
+          lit(minR), lit(maxR)))
       .withColumn(SCALED_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER,
-        scaleUDF(col(AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER), col(MIN_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER), lit(minR), lit(maxR)))
+        scaleUDF(col(AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER), col(MIN_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER),
+          lit(minR), lit(maxR)))
       .withColumn(SCALED_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER,
-        scaleUDF(col(AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER), col(MIN_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER), lit(minR), lit(maxR)))
+        scaleUDF(col(AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER), col(MIN_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER), col(MAX_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER),
+          lit(minR), lit(maxR)))
+      .select(CUSTOMER_ID,
+        SCALED_PURCHASES_PER_CUSTOMER,
+        PURCHASES_PER_CUSTOMER,
+
+        SCALED_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
+        AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
+
+        SCALED_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER,
+        AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER,
+
+        SCALED_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER,
+        AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER
+      )
 
 
     val similarity = perCustomerScaled
@@ -73,10 +89,11 @@ object CustomerSegmentationJob {
                                                       SCALED_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER,
                                                       SCALED_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER),
       array(lit(minR),lit(minR), lit(minR), lit(minR))))
+      .select(CUSTOMER_ID,SIMILARITY)
 
 
     val minMaxSimilarity = similarity.select(SIMILARITY).agg(max(SIMILARITY) as MAX_SIMILARITY,
-      min(SIMILARITY) as MIN_SIMILARITY, avg(SIMILARITY) as AVG_SIMILARITY, stddev_pop(SIMILARITY), skewness(SIMILARITY))
+      min(SIMILARITY) as MIN_SIMILARITY, avg(SIMILARITY) as AVG_SIMILARITY)
 
 
     val segments = similarity.crossJoin(minMaxSimilarity)
@@ -86,8 +103,7 @@ object CustomerSegmentationJob {
         })
 
         segmentUDF(col(SIMILARITY), col(AVG_SIMILARITY))
-      }).select(CUSTOMER_ID, PURCHASES_PER_CUSTOMER, AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
-      AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER, AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER, SIMILARITY, SEGMENT)
+      }).select(CUSTOMER_ID, SEGMENT)
 
 
     val segmentStats = segments.groupBy(SEGMENT)
@@ -110,46 +126,32 @@ object CustomerSegmentationJob {
     })
 
     val updatedCustomers = customers
-      .join(segments.select(CUSTOMER_ID, SEGMENT), Seq(CUSTOMER_ID), "left")
+      .join(segments, Seq(CUSTOMER_ID), "left")
       .withColumn(SEGMENT, updateSegmentUDF(col(SEGMENT_OLD), col(SEGMENT)))
-      .drop(SEGMENT_OLD).distinct()
+      .select(CUSTOMER_ID, SEGMENT).distinct()
 
 
     DataSource.saveDataFrameAsTSV(
-      segments.repartition(1),
-      writePath+"/customer_segments",
+      similarity.repartition(1),
+      customersPath+"../debug/similarity",
       header = STR_BOOL_TRUE
     )
 
     DataSource.saveDataFrameAsTSV(
       segmentStats.repartition(1),
-      writePath+"/segment_stats",
+      customersPath+"../debug/segment_stats",
       header = STR_BOOL_TRUE
     )
 
     DataSource.saveDataFrameAsTSV(
-      perCustomerScaled.select(
-        CUSTOMER_ID,
-
-        PURCHASES_PER_CUSTOMER,
-        SCALED_PURCHASES_PER_CUSTOMER,
-
-        AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
-        SCALED_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER,
-
-        AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER,
-        SCALED_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER,
-
-        AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER,
-        SCALED_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER
-      ).repartition(1),
-      writePath+"/perCustomerValues",
+      perCustomerScaled,
+      customersPath+"../debug/perCustomerValues",
       header = STR_BOOL_TRUE
     )
 
     DataSource.saveDataFrameAsTSV(
       updatedCustomers.repartition(1),
-      customersWritePath
+      writePath
     )
 
     DataSource.saveDataFrameToDatabase(updatedCustomers, "customers")
@@ -168,22 +170,16 @@ object CustomerSegmentationJob {
   val SEGMENT = "segment"
   val SEGMENT_OLD = "segment_old"
 
-  //Per Perchase-----------------------
   val PRICE_PER_PURCHASE = "pricePerPurchase"
   val PRODUCT_QUANTITY_RATIO_PER_PURCHASE = "productQuantityRatioPerPurchase"
 
-
-  //Per Customer-----------------------
   val PURCHASES_PER_CUSTOMER = "purchasesPerCustomer"
   val AVG_PRICE_PER_PURCHASE_PER_CUSTOMER = "avgPricePerPurchasePerCustomer"
   val AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE_PER_CUSTOMER = "avgProductQuantityRatioPerPurchasePerCustomer"
 
-
-  //Avg -------------------------------
   val AVG_PURCHASES_PER_CUSTOMER = "avgPurchasesPerCustomer"
   val AVG_PRICE_PER_PURCHASE = "avgPricePerPurchase"
   val AVG_PRODUCT_QUANTITY_RATIO_PER_PURCHASE = "avgProductQuantityRatioPerPurchase"
-
 
   val TOTAL_REVENUE = "totalRevenue"
   val TOTAL_PURCHASES = "totalPurchases"
@@ -191,19 +187,16 @@ object CustomerSegmentationJob {
 
   val NO_OF_CUSTOMERS = "noOfCustomers"
 
-
   val PRODUCTS_PER_PURCHASE = "productsPerPurchase"
   val QUANTITY_PER_PURCHASE = "quantityPerPurchase"
 
   val AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER = "avgProductsPerPurchasePerCustomer"
   val AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER = "avgQuantityPerPurchasePerCustomer"
 
-
   val SCALED_PURCHASES_PER_CUSTOMER = "scaled_purchasesPerCustomer"
   val SCALED_AVG_PRODUCTS_PER_PURCHASE_PER_CUSTOMER = "scaled_avgProductsPerPurchasePerCustomer"
   val SCALED_AVG_QUANTITY_PER_PURCHASE_PER_CUSTOMER = "scaled_avgQuantityPerPurchasePerCustomer"
   val SCALED_AVG_PRICE_PER_PURCHASE_PER_CUSTOMER = "scaled_avgPricePerPurchasePerCustomer"
-
 
   val MAX_PURCHASES_PER_CUSTOMER = "max_purchasesPerCustomer"
   val MIN_PURCHASES_PER_CUSTOMER = "min_purchasesPerCustomer"
