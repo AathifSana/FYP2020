@@ -133,19 +133,19 @@ object CustomerSegmentationJob {
 
     DataSource.saveDataFrameAsTSV(
       similarity.repartition(1),
-      customersPath+"../debug/similarity",
+      customersPath+"/../debug/similarity",
       header = STR_BOOL_TRUE
     )
 
     DataSource.saveDataFrameAsTSV(
       segmentStats.repartition(1),
-      customersPath+"../debug/segment_stats",
+      customersPath+"/../debug/segment_stats",
       header = STR_BOOL_TRUE
     )
 
     DataSource.saveDataFrameAsTSV(
       perCustomerScaled,
-      customersPath+"../debug/perCustomerValues",
+      customersPath+"/../debug/perCustomerValues",
       header = STR_BOOL_TRUE
     )
 
