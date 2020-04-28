@@ -1,10 +1,10 @@
 package jobs.test
 
 import com.twitter.scalding.Args
-import common.Common.{COMMA, jaccardSimilarityFunc}
+import common.Common.{COMMA, jaccardSimilarityFunc, STR_BOOL_TRUE}
 import common.Environment
 import datasources.DataSource
-import org.apache.spark.sql.functions.{col, lit, split, udf}
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 
 /**
@@ -37,10 +37,13 @@ object JaccardSimilarityTestJob {
     })
 
     val jDistance = jSimilar.withColumn(JACCARD_DIS, lit(1.0) - col(JACCARD_SIM))
+      .select(KEY,JACCARD_SIM,JACCARD_DIS)
 
-    val outDf = jDistance.select(KEY,JACCARD_SIM,JACCARD_DIS)
+    val outDf = jDistance.agg(avg(JACCARD_DIS) as JACCARD_DIS, avg(JACCARD_SIM) as JACCARD_SIM)
 
-    DataSource.saveDataFrameAsTSV(outDf,outputPath)
+    DataSource.saveDataFrameAsTSV(outDf,outputPath, header = STR_BOOL_TRUE)
+    DataSource.saveDataFrameAsTSV(jDistance,outputPath+"-debug", header = STR_BOOL_TRUE)
+
   }
 
     val KEY = "KEY"
